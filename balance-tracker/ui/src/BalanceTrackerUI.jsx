@@ -10,7 +10,7 @@ function BalanceTrackerUI() {
 
   async function fetchBalance() {
     try {
-      const res = await fetch("/balance");
+      const res = await fetch("http://localhost:8080/balance");
       if (!res.ok) throw new Error("Request failed: " + res.status);
       const data = await res.json();
       setBalance(typeof data.balance === "number" ? data.balance : Number(data.balance));
@@ -23,7 +23,7 @@ function BalanceTrackerUI() {
   
   useEffect(() => {
     fetchBalance(); 
-    const id = setInterval(fetchBalance, 1000); 
+    const id = setInterval(fetchBalance, 3000); 
     return () => clearInterval(id);
   }, []);
 
