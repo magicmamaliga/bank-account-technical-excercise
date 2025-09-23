@@ -13,7 +13,7 @@ function BalanceTrackerUI() {
       const res = await fetch("http://localhost:8080/balance");
       if (!res.ok) throw new Error("Request failed: " + res.status);
       const data = await res.json();
-      setBalance(typeof data.balance === "number" ? data.balance : Number(data.balance));
+      setBalance(data);
       setError(null);
     } catch (e) {
       setError(e.message);
@@ -37,7 +37,7 @@ function BalanceTrackerUI() {
         <div style={{ height: 20 }}>
           <strong>Balance:</strong>
           <span>
-            {balance === null ? "Loading..." : new Intl.NumberFormat("en-GB", { style: "currency", currency: "GBP" }).format(balance)}
+            ${balance === null ? "Loading..." : balance}
           </span>
         </div>
       </div>
