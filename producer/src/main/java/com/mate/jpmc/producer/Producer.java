@@ -8,8 +8,13 @@ import org.springframework.messaging.MessageChannel;
 import org.springframework.messaging.support.MessageBuilder;
 import org.springframework.stereotype.Component;
 
+import java.math.BigDecimal;
 import java.util.Random;
+import java.util.UUID;
 import java.util.concurrent.Executors;
+
+import static com.mate.jpmc.producer.TransactionType.CREDIT;
+import static com.mate.jpmc.producer.TransactionType.DEBIT;
 
 
 @Component
@@ -27,17 +32,17 @@ class Producer {
     public void start() {
         LOG.info("Starting Producer");
         var exec = Executors.newFixedThreadPool(2);
-        exec.submit(() -> loop(true));  // credits
-        exec.submit(() -> loop(false)); // debits
+        exec.submit(() -> generateTransaction(CREDIT));
+        exec.submit(() -> generateTransaction(DEBIT));
     }
 
-    private void loop(boolean credit) {
+    private void generateTransaction(TransactionType transactionType) {
         var rnd = new Random();
         while (true) {
             try {
-                double amount = 200 + rnd.nextInt(500_000 - 200 + 1);
-                if (!credit) amount = -amount;
-                var tx = new Tx(amount);
+                BigDecimal amount = BigDecimal.valueOf( 200 + rnd.nextDouble(500000 - 200 + 1));
+                if (DEBIT==transactionType) amount = amount.negate();
+                var tx = new Transaction(UUID.randomUUID().toString(), transactionType, amount);
                 LOG.info("Sending tx: {}", tx);
                 toTcp.send(MessageBuilder.withPayload(tx).build());
                 Thread.sleep(40); // ~25/sec per thread
@@ -48,7 +53,6 @@ class Producer {
         }
     }
 
-    public record Tx(double amount) {
-    }
+    public record Transaction(String id, TransactionType transactionType, BigDecimal amount) {}
 
 }

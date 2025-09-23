@@ -24,9 +24,9 @@ public class TcpClientConfig {
         var crlf = new ByteArrayCrLfSerializer();
         return IntegrationFlow
                 .from(toTcp())
-                .transform(Producer.Tx.class, tx -> {
+                .transform(Producer.Transaction.class, transaction -> {
                     try {
-                        return mapper.writeValueAsBytes(tx);
+                        return mapper.writeValueAsBytes(transaction);
                     } catch (JsonProcessingException e) {
                         throw new RuntimeException(e);
                     }

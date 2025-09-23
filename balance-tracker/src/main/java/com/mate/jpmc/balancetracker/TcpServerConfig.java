@@ -21,18 +21,16 @@ public class TcpServerConfig {
                 .from(Tcp.inboundAdapter(Tcp.netServer(9090).deserializer(crlf)))
                 .transform(byte[].class, bytes -> {
                     try {
-                        return mapper.readValue(bytes, Tx.class);
+                        return mapper.readValue(bytes, Transaction.class);
                     } catch (IOException e) {
                         throw new RuntimeException(e);
                     }
                 })
-                .handle(Tx.class, (tx, headers) -> {
-                    service.processTransaction(new Transaction(tx.amount()));
+                .handle(Transaction.class, (transaction, headers) -> {
+                    service.processTransaction(new Transaction(transaction.id(), transaction.transactionType(), transaction.amount()));
                     return null; // one-way
                 })
                 .get();
     }
 
-    // Payload we expect over the wire
-    public record Tx( double amount) {}
 }

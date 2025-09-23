@@ -5,6 +5,8 @@ import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
 
 import java.math.BigDecimal;
+import java.util.ArrayList;
+import java.util.List;
 
 @Service
 public class BankAccountServiceImpl implements  BankAccountService{
@@ -12,6 +14,7 @@ public class BankAccountServiceImpl implements  BankAccountService{
     private static final Logger log = LoggerFactory.getLogger(BankAccountServiceImpl.class);
 
     Balance balance = new Balance();
+    List<Transaction> transactions = new ArrayList<>();
 
     public BigDecimal retrieveBalance() {
         log.info("Retrieving balance {}", balance.getBalance());
@@ -20,6 +23,7 @@ public class BankAccountServiceImpl implements  BankAccountService{
 
     public void processTransaction(Transaction transaction) {
         log.info("Processing Transaction {}", transaction);
-        balance.deposit(BigDecimal.valueOf(transaction.amount()));
+        balance.deposit(transaction.amount());
+        transactions.add(transaction);
     }
 }

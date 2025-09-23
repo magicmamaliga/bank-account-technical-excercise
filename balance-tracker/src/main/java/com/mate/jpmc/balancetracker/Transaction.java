@@ -1,3 +1,5 @@
 package com.mate.jpmc.balancetracker;
 
-public record Transaction (double amount){}
+import java.math.BigDecimal;
+
+public record Transaction(String id, TransactionType transactionType, BigDecimal amount) {}
