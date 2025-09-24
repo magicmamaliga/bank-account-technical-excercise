@@ -6,6 +6,8 @@ import org.springframework.context.event.EventListener;
 import org.springframework.boot.context.event.ApplicationReadyEvent;
 import org.springframework.messaging.MessageChannel;
 import org.springframework.messaging.support.MessageBuilder;
+import org.springframework.retry.annotation.Backoff;
+import org.springframework.retry.annotation.Retryable;
 import org.springframework.stereotype.Component;
 
 import java.math.BigDecimal;
@@ -43,12 +45,33 @@ class Producer {
                 BigDecimal amount = BigDecimal.valueOf( 200 + rnd.nextDouble(500000 - 200 + 1));
                 if (DEBIT==transactionType) amount = amount.negate();
                 var tx = new Transaction(UUID.randomUUID().toString(), transactionType, amount);
-                LOG.info("Sending tx: {}", tx);
-                toTcp.send(MessageBuilder.withPayload(tx).build());
-                Thread.sleep(40); // ~25/sec per thread
-            } catch (InterruptedException e) {
+                sendWithRetry(tx);
+                Thread.sleep(1); // ~25/sec per thread
+            } catch (Exception e) {
+                LOG.info("Interrupted {}", e.getMessage());
                 Thread.currentThread().interrupt();
                 break;
+            }
+        }
+    }
+
+    private void sendWithRetry(Transaction tx) throws InterruptedException {
+        int maxRetries = 100;
+        int attempt = 0;
+
+        while (true) {
+            try {
+                toTcp.send(MessageBuilder.withPayload(tx).build());
+                return;
+            } catch (Exception e) {
+                attempt++;
+                if (attempt >= maxRetries) {
+                    LOG.error("Failed to send tx {} after {} retries: {}", tx, attempt, e.getMessage());
+                    throw e; // give up after max retries
+                }
+                LOG.warn("Error sending tx {}. Retry {}/{}. Retrying in 5s. Error: {}",
+                        tx, attempt, maxRetries, e.getMessage());
+                Thread.sleep(5000);
             }
         }
     }
