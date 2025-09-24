@@ -2,6 +2,7 @@ package com.mate.jpmc.producer;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.context.event.ApplicationReadyEvent;
 import org.springframework.context.event.EventListener;
 import org.springframework.messaging.MessageChannel;
@@ -18,22 +19,31 @@ import static com.mate.jpmc.producer.TransactionType.DEBIT;
 
 
 @Component
-class Producer {
+public class Producer {
 
     private static final Logger LOG = LoggerFactory.getLogger(Producer.class);
 
     private final MessageChannel toTcp;
+    private final int maxRetries;
 
-    Producer(MessageChannel toTcp) {
+    Producer(MessageChannel toTcp,
+             @Value("${maxRetries:100}")
+             int maxRetries) {
         this.toTcp = toTcp;
+        this.maxRetries = maxRetries;
     }
 
     @EventListener(ApplicationReadyEvent.class)
     public void start() {
         LOG.info("Starting Producer");
         var exec = Executors.newFixedThreadPool(2);
-        exec.submit(() -> generateTransaction(CREDIT));
-        exec.submit(() -> generateTransaction(DEBIT));
+        try {
+            exec.submit(() -> generateTransaction(CREDIT));
+            exec.submit(() -> generateTransaction(DEBIT));
+        } finally {
+            exec.shutdown();
+        }
+        LOG.info("Stopping Producer");
     }
 
     private void generateTransaction(TransactionType transactionType) {
@@ -53,8 +63,8 @@ class Producer {
         }
     }
 
-    private void sendWithRetry(Transaction tx) throws InterruptedException {
-        int maxRetries = 100;
+
+    void sendWithRetry(Transaction tx) throws InterruptedException {
         int attempt = 0;
 
         while (true) {
