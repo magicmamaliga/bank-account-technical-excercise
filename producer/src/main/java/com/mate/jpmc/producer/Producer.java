@@ -2,12 +2,10 @@ package com.mate.jpmc.producer;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.context.event.EventListener;
 import org.springframework.boot.context.event.ApplicationReadyEvent;
+import org.springframework.context.event.EventListener;
 import org.springframework.messaging.MessageChannel;
 import org.springframework.messaging.support.MessageBuilder;
-import org.springframework.retry.annotation.Backoff;
-import org.springframework.retry.annotation.Retryable;
 import org.springframework.stereotype.Component;
 
 import java.math.BigDecimal;
@@ -42,8 +40,8 @@ class Producer {
         var rnd = new Random();
         while (true) {
             try {
-                BigDecimal amount = BigDecimal.valueOf( 200 + rnd.nextDouble(500000 - 200 + 1));
-                if (DEBIT==transactionType) amount = amount.negate();
+                BigDecimal amount = BigDecimal.valueOf(200 + rnd.nextDouble(500000 - 200 + 1));
+                if (DEBIT == transactionType) amount = amount.negate();
                 var tx = new Transaction(UUID.randomUUID().toString(), transactionType, amount);
                 sendWithRetry(tx);
                 Thread.sleep(1); // ~25/sec per thread
@@ -76,6 +74,7 @@ class Producer {
         }
     }
 
-    public record Transaction(String id, TransactionType transactionType, BigDecimal amount) {}
+    public record Transaction(String id, TransactionType transactionType, BigDecimal amount) {
+    }
 
 }

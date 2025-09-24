@@ -1,7 +1,6 @@
 package com.mate.jpmc.producer;
 
 
-
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.springframework.context.annotation.Bean;
@@ -17,7 +16,9 @@ public class TcpClientConfig {
 
 
     @Bean
-    public MessageChannel toTcp() { return new DirectChannel(); }
+    public MessageChannel toTcp() {
+        return new DirectChannel();
+    }
 
     @Bean
     public IntegrationFlow tcpClientFlow(ObjectMapper mapper) {
