@@ -1,5 +1,6 @@
-package com.mate.jpmc.balancetracker;
+package com.mate.jpmc.balancetracker.balance;
 
+import com.mate.jpmc.balancetracker.receiver.Transaction;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
@@ -25,4 +26,7 @@ public class Account {
         return balance.get();
     }
 
+    public BlockingQueue<Transaction> getAuditQueue() {
+        return auditQueue;
+    }
 }

@@ -1,4 +1,6 @@
-package com.mate.jpmc.balancetracker;
+package com.mate.jpmc.balancetracker.balance;
+
+import com.mate.jpmc.balancetracker.receiver.Transaction;
 
 import java.math.BigDecimal;
 

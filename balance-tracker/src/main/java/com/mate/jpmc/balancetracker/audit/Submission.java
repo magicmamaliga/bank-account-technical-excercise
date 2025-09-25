@@ -1,4 +1,4 @@
-package com.mate.jpmc.balancetracker;
+package com.mate.jpmc.balancetracker.audit;
 
 import java.util.List;
 

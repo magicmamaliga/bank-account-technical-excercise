@@ -1,4 +1,4 @@
-package com.mate.jpmc.balancetracker;
+package com.mate.jpmc.balancetracker.audit;
 
 public class AuditException extends Exception {
     public AuditException(String message) {

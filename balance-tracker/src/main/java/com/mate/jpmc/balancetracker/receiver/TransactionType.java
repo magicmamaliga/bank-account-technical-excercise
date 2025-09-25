@@ -1,4 +1,4 @@
-package com.mate.jpmc.balancetracker;
+package com.mate.jpmc.balancetracker.receiver;
 
 public enum TransactionType {
     CREDIT,

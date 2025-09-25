@@ -1,7 +1,9 @@
-package com.mate.jpmc.balancetracker;
+package com.mate.jpmc.balancetracker.receiver;
 
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.mate.jpmc.balancetracker.balance.BankAccountService;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.integration.dsl.IntegrationFlow;
@@ -14,10 +16,11 @@ import java.io.IOException;
 public class TcpServerConfig {
 
     @Bean
-    IntegrationFlow tcpServerFlow(BankAccountService service, ObjectMapper mapper) {
-        var crlf = new ByteArrayCrLfSerializer(); // line-delimited frames
+    IntegrationFlow tcpServerFlow(BankAccountService service, ObjectMapper mapper,
+                                  @Value("${tcp.port:9090}") int port) {
+        var crlf = new ByteArrayCrLfSerializer();
         return IntegrationFlow
-                .from(Tcp.inboundAdapter(Tcp.netServer(9090).deserializer(crlf)))
+                .from(Tcp.inboundAdapter(Tcp.netServer(port).deserializer(crlf)))
                 .transform(byte[].class, bytes -> {
                     try {
                         return mapper.readValue(bytes, Transaction.class);
@@ -27,7 +30,7 @@ public class TcpServerConfig {
                 })
                 .handle(Transaction.class, (transaction, headers) -> {
                     service.processTransaction(new Transaction(transaction.id(), transaction.transactionType(), transaction.amount()));
-                    return null; // one-way
+                    return null;
                 })
                 .get();
     }

@@ -1,4 +1,4 @@
-package com.mate.jpmc.balancetracker;
+package com.mate.jpmc.balancetracker.audit;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
