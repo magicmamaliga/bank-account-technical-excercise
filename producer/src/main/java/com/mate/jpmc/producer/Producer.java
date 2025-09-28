@@ -54,7 +54,7 @@ public class Producer {
                 if (DEBIT == transactionType) amount = amount.negate();
                 var tx = new Transaction(UUID.randomUUID().toString(), transactionType, amount);
                 sendWithRetry(tx);
-                Thread.sleep(1); // ~25/sec per thread
+                Thread.sleep(40); // 40 mills ~25/sec per thread
             } catch (Exception e) {
                 LOG.info("Interrupted {}", e.getMessage());
                 Thread.currentThread().interrupt();

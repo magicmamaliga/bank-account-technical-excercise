@@ -59,8 +59,8 @@ class AuditBatcherBuildBatchesTest {
         assertEquals(expectedTotalItems, counted, "All transactions should be assigned to some batch");
     }
 
-    private static void setPrivateInt(Object target, String fieldName, int value) throws Exception {
-        Field f = target.getClass().getDeclaredField(fieldName);
+    private static void setSubmissionSizePrivateInt(Object target, int value) throws Exception {
+        Field f = target.getClass().getDeclaredField("submissionSize");
         f.setAccessible(true);
         f.setInt(target, value);
     }
@@ -74,7 +74,7 @@ class AuditBatcherBuildBatchesTest {
 
         batcher = new AuditBatcher(account, sender);
 
-        setPrivateInt(batcher, "minimumWindowSize", 1000);
+        setSubmissionSizePrivateInt(batcher, 1000);
     }
 
     // ------------------------------------------------------------------------------------------------
@@ -83,7 +83,7 @@ class AuditBatcherBuildBatchesTest {
 
     @Test
     void rejectsNullEmptyOrTooSmall() throws Exception {
-        setPrivateInt(batcher, "minimumWindowSize", 5);
+        setSubmissionSizePrivateInt(batcher, 5);
 
         assertThrows(AuditException.class, () -> batcher.buildBatches(null));
         assertThrows(AuditException.class, () -> batcher.buildBatches(List.of()));
@@ -94,7 +94,7 @@ class AuditBatcherBuildBatchesTest {
 
     @Test
     void throwsIfSingleTransactionExceedsCap() throws Exception {
-        setPrivateInt(batcher, "minimumWindowSize", 1);
+        setSubmissionSizePrivateInt(batcher, 1);
 
         Transaction overCredit = credit(CAP.add(BigDecimal.ONE));
         IllegalArgumentException ex1 = assertThrows(IllegalArgumentException.class,
@@ -109,7 +109,7 @@ class AuditBatcherBuildBatchesTest {
 
     @Test
     void creditsDontOffsetDebits_andNoBatchExceedsCap() throws Exception {
-        setPrivateInt(batcher, "minimumWindowSize", 6);
+        setSubmissionSizePrivateInt(batcher, 6);
 
         BigDecimal sixHundredK = new BigDecimal("600000");
         BigDecimal fourHundredK = new BigDecimal("400000");
@@ -135,7 +135,7 @@ class AuditBatcherBuildBatchesTest {
 
     @Test
     void greedyFirstFitDecreasingPacksReasonably_random100() throws Exception {
-        setPrivateInt(batcher, "minimumWindowSize", 100);
+        setSubmissionSizePrivateInt(batcher, 100);
 
         // 100 random transactions in [200, 500_000], random sign
         Random r = new Random(42);
@@ -154,7 +154,7 @@ class AuditBatcherBuildBatchesTest {
 
     @Test
     void exactFillToCapCreatesSingleBatch() throws Exception {
-        setPrivateInt(batcher, "minimumWindowSize", 3);
+        setSubmissionSizePrivateInt(batcher, 3);
 
         // 700k + 200k + 100k = 1_000_000 exactly
         List<Transaction> window = List.of(
@@ -167,7 +167,7 @@ class AuditBatcherBuildBatchesTest {
         List<Batch> batches = s.batches();
 
         assertEquals(1, batches.size(), "Should fit into a single batch exactly at CAP");
-        BigDecimal remaining = batches.get(0).remaining();
+        BigDecimal remaining = batches.getFirst().remaining();
         assertEquals(BigDecimal.ZERO, remaining, "Remaining should be 0 when exactly filled");
     }
 }

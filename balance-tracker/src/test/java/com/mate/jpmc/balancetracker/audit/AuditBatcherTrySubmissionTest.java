@@ -67,7 +67,7 @@ class AuditBatcherTrySubmissionTest {
 
         // real instance so the queue reference is wired; then spy to stub buildBatches
         AuditBatcher real = new AuditBatcher(account, sender);
-        setPrivateInt(real, "minimumWindowSize", 10); // default N=10; override per-test if desired
+        setPrivateInt(real, "submissionSize", 10); // default N=10; override per-test if desired
         batcher = spy(real);
     }
 
@@ -76,7 +76,7 @@ class AuditBatcherTrySubmissionTest {
         // queue size 7 < N(10)
         offerMany(auditQueue, 7);
 
-        batcher.trySubmission();
+        batcher.submitForAudit();
 
         // nothing sent
         verify(sender, never()).sendSubmission(any());
@@ -90,14 +90,14 @@ class AuditBatcherTrySubmissionTest {
     void happyPath_exactWindowSize_drainsAndSends() throws Exception {
         // exactly N
         int N = 10;
-        setPrivateInt(batcher, "minimumWindowSize", N);
+        setPrivateInt(batcher, "submissionSize", N);
         offerMany(auditQueue, N);
 
         // stub buildBatches -> returns a dummy submission
         Submission dummy = new Submission(List.of());
         doReturn(dummy).when(batcher).buildBatches(anyList());
 
-        batcher.trySubmission();
+        batcher.submitForAudit();
 
         // drained all N
         assertEquals(0, auditQueue.size());
@@ -115,16 +115,16 @@ class AuditBatcherTrySubmissionTest {
     @Test
     void happyPath_moreThanWindowSize_drainsOnlyN_leavesRemainder() throws Exception {
         int N = 10;
-        setPrivateInt(batcher, "minimumWindowSize", N);
-        offerMany(auditQueue, 23); // 23 in queue
+        setPrivateInt(batcher, "submissionSize", N);
+        offerMany(auditQueue, 13); // 23 in queue
 
         Submission dummy = new Submission(List.of());
         doReturn(dummy).when(batcher).buildBatches(anyList());
 
-        batcher.trySubmission();
+        batcher.submitForAudit();
 
         // should drain only N, leaving 13
-        assertEquals(23 - N, auditQueue.size());
+        assertEquals(3, auditQueue.size());
         verify(batcher).buildBatches(argThat(list -> list.size() == N));
         verify(sender).sendSubmission(dummy);
     }
@@ -132,12 +132,12 @@ class AuditBatcherTrySubmissionTest {
     @Test
     void buildBatchesThrows_rollbackAllItems_NoSend() throws Exception {
         int N = 10;
-        setPrivateInt(batcher, "minimumWindowSize", N);
+        setPrivateInt(batcher, "submissionSize", N);
         offerMany(auditQueue, N);
 
         doThrow(new AuditException("boom")).when(batcher).buildBatches(anyList());
 
-        batcher.trySubmission();
+        batcher.submitForAudit();
 
         // all items put back
         assertEquals(N, auditQueue.size(), "All drained items must be returned on failure");
@@ -147,18 +147,18 @@ class AuditBatcherTrySubmissionTest {
     @Test
     void partialDrainDetected_rollBack_NoSend() throws Exception {
         int N = 10;
-        setPrivateInt(batcher, "minimumWindowSize", N);
+        setPrivateInt(batcher, "submissionSize", N);
 
         // Use a custom queue whose drainTo(Collection, N) drains only N-1 even if size>=N
         PartialDrainQueue partial = new PartialDrainQueue();
         when(account.getAuditQueue()).thenReturn(partial);
         AuditBatcher real = new AuditBatcher(account, sender);
-        setPrivateInt(real, "minimumWindowSize", N);
+        setPrivateInt(real, "submissionSize", N);
         AuditBatcher spied = spy(real);
 
         partial.offerAll(makeTransactions(N)); // size is N
 
-        spied.trySubmission();
+        spied.submitForAudit();
 
         // Since window.size() < N, items must be put back; queue should end with original N
         assertEquals(N, partial.size(), "Items must be rolled back on partial drain");
