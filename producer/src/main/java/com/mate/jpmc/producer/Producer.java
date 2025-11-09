@@ -52,7 +52,7 @@ public class Producer {
             try {
                 BigDecimal amount = BigDecimal.valueOf(200 + rnd.nextDouble(500000 - 200 + 1));
                 if (DEBIT == transactionType) amount = amount.negate();
-                var tx = new Transaction(UUID.randomUUID().toString(), transactionType, amount);
+                var tx = new Transaction(UUID.randomUUID().toString(), "ABC1234", transactionType, amount);
                 sendWithRetry(tx);
                 Thread.sleep(40); // 40 mills ~25/sec per thread
             } catch (Exception e) {
@@ -84,7 +84,7 @@ public class Producer {
         }
     }
 
-    public record Transaction(String id, TransactionType transactionType, BigDecimal amount) {
+    public record Transaction(String transactionId, String accountId, TransactionType transactionType, BigDecimal amount) {
     }
 
 }

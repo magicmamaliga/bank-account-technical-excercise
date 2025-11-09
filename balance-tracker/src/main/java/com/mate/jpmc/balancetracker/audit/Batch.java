@@ -1,6 +1,6 @@
 package com.mate.jpmc.balancetracker.audit;
 
-import com.mate.jpmc.balancetracker.receiver.Transaction;
+import com.mate.jpmc.balancetracker.receiver.TransactionDTO;
 
 import java.math.BigDecimal;
 import java.util.ArrayList;
@@ -10,19 +10,19 @@ public class Batch {
 
     public static final BigDecimal CAP = new BigDecimal(1_000_000);
     private BigDecimal remaining = CAP;
-    private final List<Transaction> items = new ArrayList<>();
+    private final List<TransactionDTO> items = new ArrayList<>();
 
-    public List<Transaction> getItems() {
+    public List<TransactionDTO> getItems() {
         return items;
     }
 
-    public void add(Transaction transaction) {
-        BigDecimal value = transaction.amount().abs();
+    public void add(TransactionDTO transactionDTO) {
+        BigDecimal value = transactionDTO.amount().abs();
         if(value.compareTo(remaining) > 0) {
             throw new IllegalArgumentException("Value does not fit");
         }
         remaining = remaining.subtract(value);
-        items.add(transaction);
+        items.add(transactionDTO);
     }
 
 

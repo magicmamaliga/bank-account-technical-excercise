@@ -1,6 +1,7 @@
 package com.mate.jpmc.balancetracker.balance;
 
-import com.mate.jpmc.balancetracker.receiver.Transaction;
+import com.mate.jpmc.balancetracker.BalanceTrackerException;
+import com.mate.jpmc.balancetracker.receiver.TransactionDTO;
 
 import java.math.BigDecimal;
 
@@ -11,13 +12,13 @@ public interface BankAccountService {
     /**
      * Process a given transaction - this is to be called by the credit and debit generation threads.
      *
-     * @param transaction transaction to process
+     * @param transactionDTO transaction to process
      */
-    void processTransaction(Transaction transaction);
+    void processTransaction(TransactionDTO transactionDTO) throws BalanceTrackerException;
 
     /**
      * Retrieve the balance in the account
      */
-    BigDecimal retrieveBalance();
+    BigDecimal retrieveBalance(String accountId) throws BalanceTrackerException;
 
 }

@@ -56,7 +56,7 @@ class TcpServerConfigTest {
 
     @Test
     void tcpServer_receivesJsonLine_crlfFramed_and_callsService() throws Exception {
-        var tx = new Transaction("abc-123", TransactionType.CREDIT, new BigDecimal("1234.56"));
+        var tx = new TransactionDTO("abc-123", TransactionType.CREDIT, new BigDecimal("1234.56"));
         byte[] json = objectMapper.writeValueAsBytes(tx);
 
         try (Socket socket = new Socket("127.0.0.1", port)) {
@@ -66,11 +66,11 @@ class TcpServerConfigTest {
             out.write('\n'); // LF
             out.flush();
 
-            ArgumentCaptor<Transaction> captor = ArgumentCaptor.forClass(Transaction.class);
+            ArgumentCaptor<TransactionDTO> captor = ArgumentCaptor.forClass(TransactionDTO.class);
             verify(bankAccountService, timeout(1500)).processTransaction(captor.capture());
 
             var received = captor.getValue();
-            assertThat(received.id()).isEqualTo("abc-123");
+            assertThat(received.transactionId()).isEqualTo("abc-123");
             assertThat(received.transactionType()).isEqualTo(TransactionType.CREDIT);
             assertThat(received.amount()).isEqualByComparingTo("1234.56");
         }

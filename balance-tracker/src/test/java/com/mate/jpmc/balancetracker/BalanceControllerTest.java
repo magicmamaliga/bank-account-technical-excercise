@@ -36,20 +36,20 @@ class BalanceControllerTest {
 
     @Test
     void getBalance_returnsOkJson_andInvokesService() throws Exception {
-        when(bankAccountService.retrieveBalance()).thenReturn(new BigDecimal("123.45"));
+        when(bankAccountService.retrieveBalance("")).thenReturn(new BigDecimal("123.45"));
 
         mockMvc.perform(get("/balance"))
                 .andExpect(status().isOk())
                 .andExpect(content().contentType(MediaType.APPLICATION_JSON))
                 .andExpect(content().string("123.45"));
 
-        verify(bankAccountService, times(1)).retrieveBalance();
+        verify(bankAccountService, times(1)).retrieveBalance("");
         verifyNoMoreInteractions(bankAccountService);
     }
 
     @Test
     void getBalance_includesCorsHeader_forAllowedOrigin() throws Exception {
-        when(bankAccountService.retrieveBalance()).thenReturn(new BigDecimal("10"));
+        when(bankAccountService.retrieveBalance("")).thenReturn(new BigDecimal("10"));
 
         mockMvc.perform(get("/balance")
                         .header("Origin", "http://localhost:5173"))
@@ -66,7 +66,7 @@ class BalanceControllerTest {
                 .andExpect(status().isForbidden())
                 .andExpect(header().doesNotExist("Access-Control-Allow-Origin"))
                 .andExpect(content().string("Invalid CORS request"));
-        verify(bankAccountService, times(0)).retrieveBalance();
+        verify(bankAccountService, times(0)).retrieveBalance("");
 
     }
 

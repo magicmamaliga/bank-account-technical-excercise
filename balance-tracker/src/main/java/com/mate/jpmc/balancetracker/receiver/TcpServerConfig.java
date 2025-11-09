@@ -2,6 +2,7 @@ package com.mate.jpmc.balancetracker.receiver;
 
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.mate.jpmc.balancetracker.BalanceTrackerException;
 import com.mate.jpmc.balancetracker.balance.BankAccountService;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
@@ -23,13 +24,16 @@ public class TcpServerConfig {
                 .from(Tcp.inboundAdapter(Tcp.netServer(port).deserializer(crlf)))
                 .transform(byte[].class, bytes -> {
                     try {
-                        return mapper.readValue(bytes, Transaction.class);
+                        return mapper.readValue(bytes, TransactionDTO.class);
                     } catch (IOException e) {
-                        throw new RuntimeException(e);
+                        return "error reading transaction bytes";
                     }
-                })
-                .handle(Transaction.class, (transaction, headers) -> {
-                    service.processTransaction(new Transaction(transaction.id(), transaction.transactionType(), transaction.amount()));
+                }).handle(TransactionDTO.class, (transaction, headers) -> {
+                    try {
+                        service.processTransaction(new TransactionDTO(transaction.transactionId(), transaction.accountId(), transaction.transactionType(), transaction.amount()));
+                    } catch (BalanceTrackerException e) {
+                        return "Error processing transaction " + transaction.transactionId();
+                    }
                     return null;
                 })
                 .get();

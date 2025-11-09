@@ -1,6 +1,6 @@
 package com.mate.jpmc.balancetracker.audit;
 
-import com.mate.jpmc.balancetracker.receiver.Transaction;
+import com.mate.jpmc.balancetracker.receiver.TransactionDTO;
 import com.mate.jpmc.balancetracker.receiver.TransactionType;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -21,7 +21,7 @@ class BatchTest {
 
     @Test
     void addTransactionWithinCap_updatesRemainingAndItems() {
-        Transaction tx = new Transaction("id1", TransactionType.CREDIT, new BigDecimal("200000"));
+        TransactionDTO tx = new TransactionDTO("id1", TransactionType.CREDIT, new BigDecimal("200000"));
 
         batch.add(tx);
 
@@ -31,8 +31,8 @@ class BatchTest {
 
     @Test
     void addTransactionExceedingRemaining_throwsException() {
-        Transaction tx1 = new Transaction("id1", TransactionType.CREDIT, new BigDecimal("900000"));
-        Transaction tx2 = new Transaction("id2", TransactionType.CREDIT, new BigDecimal("200000"));
+        TransactionDTO tx1 = new TransactionDTO("id1", TransactionType.CREDIT, new BigDecimal("900000"));
+        TransactionDTO tx2 = new TransactionDTO("id2", TransactionType.CREDIT, new BigDecimal("200000"));
 
         batch.add(tx1);
 
@@ -43,9 +43,9 @@ class BatchTest {
 
     @Test
     void addMultipleTransactions_accumulatesUntilCap() {
-        Transaction tx1 = new Transaction("id1", TransactionType.CREDIT, new BigDecimal("-400000"));
-        Transaction tx2 = new Transaction("id2", TransactionType.DEBIT, new BigDecimal("-300000"));
-        Transaction tx3 = new Transaction("id3", TransactionType.CREDIT, new BigDecimal("300000"));
+        TransactionDTO tx1 = new TransactionDTO("id1", TransactionType.CREDIT, new BigDecimal("-400000"));
+        TransactionDTO tx2 = new TransactionDTO("id2", TransactionType.DEBIT, new BigDecimal("-300000"));
+        TransactionDTO tx3 = new TransactionDTO("id3", TransactionType.CREDIT, new BigDecimal("300000"));
 
         batch.add(tx1);
         batch.add(tx2);
@@ -57,7 +57,7 @@ class BatchTest {
 
     @Test
     void addTransactionEqualToRemaining_fitsExactly() {
-        Transaction tx = new Transaction("idX", TransactionType.CREDIT, Batch.CAP);
+        TransactionDTO tx = new TransactionDTO("idX", TransactionType.CREDIT, Batch.CAP);
 
         batch.add(tx);
 
@@ -67,7 +67,7 @@ class BatchTest {
 
     @Test
     void addTransactionAboveCap_throwsException() {
-        Transaction tooLarge = new Transaction("idBig", TransactionType.CREDIT, new BigDecimal("1000001"));
+        TransactionDTO tooLarge = new TransactionDTO("idBig", TransactionType.CREDIT, new BigDecimal("1000001"));
 
         assertThrows(IllegalArgumentException.class, () -> batch.add(tooLarge));
 

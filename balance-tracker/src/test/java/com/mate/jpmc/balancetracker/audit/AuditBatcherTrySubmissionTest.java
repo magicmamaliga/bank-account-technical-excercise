@@ -1,7 +1,7 @@
 package com.mate.jpmc.balancetracker.audit;
 
-import com.mate.jpmc.balancetracker.balance.Account;
-import com.mate.jpmc.balancetracker.receiver.Transaction;
+import com.mate.jpmc.balancetracker.balance.model.Account;
+import com.mate.jpmc.balancetracker.receiver.TransactionDTO;
 import com.mate.jpmc.balancetracker.receiver.TransactionType;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -33,20 +33,20 @@ class AuditBatcherTrySubmissionTest {
     private AuditBatcher batcher;       // we'll spy this
     private Account account;
     private AuditSender sender;
-    private BlockingQueue<Transaction> auditQueue;
+    private BlockingQueue<TransactionDTO> auditQueue;
 
-    private static void offerMany(BlockingQueue<Transaction> q, int count) {
-        for (Transaction t : makeTransactions(count)) q.offer(t);
+    private static void offerMany(BlockingQueue<TransactionDTO> q, int count) {
+        for (TransactionDTO t : makeTransactions(count)) q.offer(t);
     }
 
-    private static List<Transaction> makeTransactions(int count) {
-        List<Transaction> list = new ArrayList<>(count);
+    private static List<TransactionDTO> makeTransactions(int count) {
+        List<TransactionDTO> list = new ArrayList<>(count);
         for (int i = 0; i < count; i++) {
             // alternate credit/debit; values in [200..500_000]
             BigDecimal abs = BigDecimal.valueOf(200L + (i % 500_000));
-            Transaction tx = (i % 2 == 0)
-                    ? new Transaction(UUID.randomUUID().toString(), TransactionType.CREDIT, abs)
-                    : new Transaction(UUID.randomUUID().toString(), TransactionType.DEBIT, abs.negate());
+            TransactionDTO tx = (i % 2 == 0)
+                    ? new TransactionDTO(UUID.randomUUID().toString(), TransactionType.CREDIT, abs)
+                    : new TransactionDTO(UUID.randomUUID().toString(), TransactionType.DEBIT, abs.negate());
             list.add(tx);
         }
         return list;
@@ -166,22 +166,22 @@ class AuditBatcherTrySubmissionTest {
         verify(sender, never()).sendSubmission(any());
     }
 
-    private static class PartialDrainQueue extends LinkedBlockingQueue<Transaction> {
+    private static class PartialDrainQueue extends LinkedBlockingQueue<TransactionDTO> {
         @Override
-        public int drainTo(java.util.Collection<? super Transaction> c, int maxElements) {
+        public int drainTo(java.util.Collection<? super TransactionDTO> c, int maxElements) {
             // drain one-less than requested if possible, simulating a partial drain glitch
             int toDrain = Math.min(size(), Math.max(0, maxElements - 1));
             int drained = 0;
             for (; drained < toDrain; drained++) {
-                Transaction t = poll();
+                TransactionDTO t = poll();
                 if (t == null) break;
                 c.add(t);
             }
             return drained;
         }
 
-        void offerAll(List<Transaction> list) {
-            for (Transaction t : list) offer(t);
+        void offerAll(List<TransactionDTO> list) {
+            for (TransactionDTO t : list) offer(t);
         }
     }
 }
