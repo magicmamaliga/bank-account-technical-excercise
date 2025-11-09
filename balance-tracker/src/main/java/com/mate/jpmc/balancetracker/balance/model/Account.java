@@ -7,7 +7,7 @@ import org.springframework.data.mongodb.core.mapping.Document;
 @Document(collection = "accounts")
 public record Account(
         @Id String id,
-        String account_id,
+        String accountId,
         String name,
         String address
 ) {

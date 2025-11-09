@@ -2,7 +2,6 @@ package com.mate.jpmc.balancetracker.balance;
 
 import com.mate.jpmc.balancetracker.BalanceTrackerException;
 import jakarta.annotation.Resource;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.CrossOrigin;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestParam;
@@ -13,12 +12,9 @@ import java.math.BigDecimal;
 @RestController
 public class BalanceController {
 
-    @Autowired
+    @Resource
     BankAccountServiceImpl bankAccountService;
 
-    public BalanceController(BankAccountServiceImpl bankAccountService) {
-        this.bankAccountService = bankAccountService;
-    }
 
     @CrossOrigin(origins = "http://localhost:5173")
     @GetMapping("/balance")

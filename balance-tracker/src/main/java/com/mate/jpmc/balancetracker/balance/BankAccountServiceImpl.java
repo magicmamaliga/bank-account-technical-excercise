@@ -6,9 +6,10 @@ import com.mate.jpmc.balancetracker.balance.model.AccountRepository;
 import com.mate.jpmc.balancetracker.balance.model.Transaction;
 import com.mate.jpmc.balancetracker.balance.model.TransactionRepository;
 import com.mate.jpmc.balancetracker.receiver.TransactionDTO;
+import io.micrometer.core.annotation.Counted;
+import io.micrometer.core.annotation.Timed;
 import jakarta.annotation.Resource;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.util.StringUtils;
 
@@ -21,9 +22,10 @@ import java.util.Optional;
 @Slf4j
 public class BankAccountServiceImpl implements  BankAccountService {
 
-    @Autowired
+    @Resource
     AccountRepository accountRepository;
-    @Autowired
+
+    @Resource
     TransactionRepository transactionRepository;
 
     public BigDecimal retrieveBalance(String accountId) throws BalanceTrackerException {
@@ -50,8 +52,10 @@ public class BankAccountServiceImpl implements  BankAccountService {
         return transactions.stream().map(Transaction::amount).reduce(BigDecimal.ZERO, BigDecimal::add);
     }
 
+    @Counted(value = "processTransactionCount", description = "processTransaction")
+    @Timed(value = "processTransactionTimed", description = "processTransaction")
     public void processTransaction(TransactionDTO transactionDTO) throws BalanceTrackerException {
-        log.info("Processing transaction {}", transactionDTO);
+//        log.info("Processing transaction {}", transactionDTO);
 
         BigDecimal amount = transactionDTO.amount();
         if (amount == null

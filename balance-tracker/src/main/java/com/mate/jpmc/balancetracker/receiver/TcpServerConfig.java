@@ -9,19 +9,36 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.integration.dsl.IntegrationFlow;
 import org.springframework.integration.ip.dsl.Tcp;
+import org.springframework.integration.ip.tcp.connection.TcpNetServerConnectionFactory;
 import org.springframework.integration.ip.tcp.serializer.ByteArrayCrLfSerializer;
+import org.springframework.scheduling.concurrent.ThreadPoolTaskExecutor;
 
 import java.io.IOException;
 
 @Configuration
 public class TcpServerConfig {
+    @Bean
+    public TcpNetServerConnectionFactory serverConnectionFactory(@Value("${tcp.port:9090}") int port) {
+        TcpNetServerConnectionFactory factory = new TcpNetServerConnectionFactory(port);
+        factory.setDeserializer(new ByteArrayCrLfSerializer());
+        factory.setSerializer(new ByteArrayCrLfSerializer());
+        factory.setBacklog(200);             // ✅ equivalent to soBacklog
+        factory.setSoTimeout(10000);         // optional read timeout
+        return factory;
+    }
 
     @Bean
-    IntegrationFlow tcpServerFlow(BankAccountService service, ObjectMapper mapper,
+    IntegrationFlow tcpServerFlow(TcpNetServerConnectionFactory connectionFactory,
+                                  BankAccountService service,
+                                  ObjectMapper mapper,
                                   @Value("${tcp.port:9090}") int port) {
         var crlf = new ByteArrayCrLfSerializer();
+        ThreadPoolTaskExecutor executor = new ThreadPoolTaskExecutor();
+        executor.setCorePoolSize(50);
+        executor.setMaxPoolSize(100);
+        executor.initialize();
         return IntegrationFlow
-                .from(Tcp.inboundAdapter(Tcp.netServer(port).deserializer(crlf)))
+                .from(Tcp.inboundGateway(connectionFactory))
                 .transform(byte[].class, bytes -> {
                     try {
                         return mapper.readValue(bytes, TransactionDTO.class);
@@ -34,7 +51,7 @@ public class TcpServerConfig {
                     } catch (BalanceTrackerException e) {
                         return "Error processing transaction " + transaction.transactionId();
                     }
-                    return null;
+                    return "OK";
                 })
                 .get();
     }

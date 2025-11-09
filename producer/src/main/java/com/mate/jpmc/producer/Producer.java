@@ -54,7 +54,7 @@ public class Producer {
                 if (DEBIT == transactionType) amount = amount.negate();
                 var tx = new Transaction(UUID.randomUUID().toString(), "ABC1234", transactionType, amount);
                 sendWithRetry(tx);
-                Thread.sleep(40); // 40 mills ~25/sec per thread
+                Thread.sleep(500); // 40 mills ~25/sec per thread
             } catch (Exception e) {
                 LOG.info("Interrupted {}", e.getMessage());
                 Thread.currentThread().interrupt();
@@ -79,7 +79,7 @@ public class Producer {
                 }
                 LOG.warn("Error sending tx {}. Retry {}/{}. Retrying in 5s. Error: {}",
                         tx, attempt, maxRetries, e.getMessage());
-                Thread.sleep(5000);
+                Thread.sleep(40);
             }
         }
     }
