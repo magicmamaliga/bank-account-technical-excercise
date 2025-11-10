@@ -2,6 +2,7 @@ package com.mate.jpmc.balancetracker.balance;
 
 import com.mate.jpmc.balancetracker.BalanceTrackerException;
 import com.mate.jpmc.balancetracker.balance.cache.AccountBalanceCache;
+import com.mate.jpmc.balancetracker.balance.cache.TransactionCache;
 import com.mate.jpmc.balancetracker.balance.model.Account;
 import com.mate.jpmc.balancetracker.balance.model.AccountRepository;
 import com.mate.jpmc.balancetracker.balance.model.Transaction;
@@ -38,10 +39,13 @@ public class BankAccountServiceImpl implements  BankAccountService {
     @Resource
     AccountBalanceCache accountBalanceCache;
 
+    @Resource
+    TransactionCache transactionCache;
+
     public BigDecimal retrieveBalance(String accountId) throws BalanceTrackerException {
         log.info("Retrieving balance for account {}", accountId);
 
-        if (StringUtils.hasText(accountId)) {
+        if (!StringUtils.hasText(accountId)) {
             throw new BalanceTrackerException("Account Id can't be null or empty");
         }
 
@@ -54,7 +58,7 @@ public class BankAccountServiceImpl implements  BankAccountService {
     }
 
     private BigDecimal calculateBalance(String accountId) throws BalanceTrackerException {
-        if (StringUtils.hasText(accountId)) {
+        if (!StringUtils.hasText(accountId)) {
             throw new BalanceTrackerException("Account Id can't be null or empty");
         }
         List<Transaction> transactions = transactionRepository.findByAccountId(accountId);
@@ -96,7 +100,7 @@ public class BankAccountServiceImpl implements  BankAccountService {
                 transactionDTO.amount(),
                 new Date());
         transactions.offer(transaction);
-
+        transactionCache.getTransactionCache().offer(transactionDTO);
         saveTransactions();
     }
 
