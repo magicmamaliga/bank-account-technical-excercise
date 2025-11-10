@@ -1,6 +1,7 @@
 package com.mate.jpmc.balancetracker.balance;
 
 import com.mate.jpmc.balancetracker.BalanceTrackerException;
+import com.mate.jpmc.balancetracker.balance.cache.AccountBalanceCache;
 import com.mate.jpmc.balancetracker.balance.model.Account;
 import com.mate.jpmc.balancetracker.balance.model.AccountRepository;
 import com.mate.jpmc.balancetracker.balance.model.Transaction;
@@ -27,6 +28,9 @@ public class BankAccountServiceImpl implements  BankAccountService {
 
     @Resource
     TransactionRepository transactionRepository;
+
+    @Resource
+    AccountBalanceCache accountBalanceCache;
 
     public BigDecimal retrieveBalance(String accountId) throws BalanceTrackerException {
         log.info("Retrieving balance for account {}", accountId);
@@ -55,7 +59,7 @@ public class BankAccountServiceImpl implements  BankAccountService {
     @Counted(value = "processTransactionCount", description = "processTransaction")
     @Timed(value = "processTransactionTimed", description = "processTransaction")
     public void processTransaction(TransactionDTO transactionDTO) throws BalanceTrackerException {
-//        log.info("Processing transaction {}", transactionDTO);
+        log.info("Processing transaction {}", transactionDTO);
 
         BigDecimal amount = transactionDTO.amount();
         if (amount == null
@@ -70,10 +74,14 @@ public class BankAccountServiceImpl implements  BankAccountService {
             throw new BalanceTrackerException("Account Id can't be null or empty");
         }
 
-        Optional<Account> account = accountRepository.findByAccountId(transactionDTO.accountId());
-        if (account.isEmpty()) {
-            log.info("Account not found accountId {}", transactionDTO.accountId());
-            throw new BalanceTrackerException("Account not found");
+        BigDecimal accountBalanceCacheBalance = accountBalanceCache.getBalance(transactionDTO.accountId());
+        if (accountBalanceCacheBalance == null) {
+            Optional<Account> account = accountRepository.findByAccountId(transactionDTO.accountId());
+            if (account.isEmpty()) {
+                log.info("Account not found accountId {}", transactionDTO.accountId());
+                throw new BalanceTrackerException("Account not found");
+            }
+            accountBalanceCache.putBalance(transactionDTO.accountId(), BigDecimal.ZERO);
         }
 
         Transaction transaction = new Transaction(null,
