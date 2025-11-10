@@ -8,6 +8,9 @@ import java.util.stream.IntStream;
 /**
  * Unoptimised calls: Processed 1000000 messages in 156.44 sec (6392.42 msg/sec)
  * Cached AccountId for lookup: Processed 1000000 messages in 104.87 sec (9535.74 msg/sec)
+ * Batching: Processed 1000000 messages in 23.85 sec (41926.19 msg/sec)
+ * Batching and Async: Processed 1000000 messages in 18.44 sec (54244.19 msg/sec)
+ * +extra Processed 1000000 messages in 17.74 sec (56370.99 msg/sec)
  */
 public class TcpLoadTest {
 

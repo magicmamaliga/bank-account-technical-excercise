@@ -11,13 +11,19 @@ import io.micrometer.core.annotation.Counted;
 import io.micrometer.core.annotation.Timed;
 import jakarta.annotation.Resource;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 import org.springframework.util.StringUtils;
 
 import java.math.BigDecimal;
+import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
 import java.util.Optional;
+import java.util.concurrent.BlockingDeque;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.LinkedBlockingDeque;
 
 @Service
 @Slf4j
@@ -59,7 +65,7 @@ public class BankAccountServiceImpl implements  BankAccountService {
     @Counted(value = "processTransactionCount", description = "processTransaction")
     @Timed(value = "processTransactionTimed", description = "processTransaction")
     public void processTransaction(TransactionDTO transactionDTO) throws BalanceTrackerException {
-        log.info("Processing transaction {}", transactionDTO);
+//        log.info("Processing transaction {}", transactionDTO);
 
         BigDecimal amount = transactionDTO.amount();
         if (amount == null
@@ -74,15 +80,14 @@ public class BankAccountServiceImpl implements  BankAccountService {
             throw new BalanceTrackerException("Account Id can't be null or empty");
         }
 
-        BigDecimal accountBalanceCacheBalance = accountBalanceCache.getBalance(transactionDTO.accountId());
-        if (accountBalanceCacheBalance == null) {
-            Optional<Account> account = accountRepository.findByAccountId(transactionDTO.accountId());
+        accountBalanceCache.computeIfAbsent(transactionDTO.accountId(), (id)->{
+            Optional<Account> account = accountRepository.findByAccountId(id);
             if (account.isEmpty()) {
-                log.info("Account not found accountId {}", transactionDTO.accountId());
-                throw new BalanceTrackerException("Account not found");
+                log.info("Account not found accountId {}", id);
+                throw new RuntimeException("Account not found");
             }
-            accountBalanceCache.putBalance(transactionDTO.accountId(), BigDecimal.ZERO);
-        }
+            return BigDecimal.ZERO;
+        });
 
         Transaction transaction = new Transaction(null,
                 transactionDTO.transactionId(),
@@ -90,8 +95,42 @@ public class BankAccountServiceImpl implements  BankAccountService {
                 transactionDTO.transactionType(),
                 transactionDTO.amount(),
                 new Date());
+        transactions.offer(transaction);
 
-        transactionRepository.save(transaction);
+        saveTransactions();
+    }
+
+    private void saveTransactions() {
+        if (transactions.size() < 5000) {
+            return;
+        }
+
+        List<Transaction> transactionBatch = new ArrayList<>(5000);
+
+        transactions.drainTo(transactionBatch, 5000);
+        batchExecutor.submit(() -> {
+            transactionRepository.saveAll(transactionBatch);
+            lastFlush = System.currentTimeMillis();
+        });
+    }
+
+    ExecutorService batchExecutor =  Executors.newSingleThreadExecutor();
+    BlockingDeque<Transaction> transactions = new LinkedBlockingDeque<>();
+    private Long lastFlush;
+
+    @Scheduled(fixedRate = 6000)
+    void handleLeftover() {
+        if (lastFlush == null) {
+            return;
+        }
+        if (System.currentTimeMillis() - lastFlush > 6000 && !transactions.isEmpty()) {
+            int size = transactions.size();
+            List<Transaction> transactionBatch = new ArrayList<>(size);
+            transactions.drainTo(transactionBatch, size);
+            transactionRepository.saveAll(transactionBatch);
+            lastFlush = System.currentTimeMillis();
+        }
+
     }
 
 }
