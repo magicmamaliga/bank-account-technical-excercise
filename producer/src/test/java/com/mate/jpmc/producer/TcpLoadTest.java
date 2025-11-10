@@ -4,6 +4,10 @@ import java.net.Socket;
 import java.util.concurrent.*;
 import java.util.stream.IntStream;
 
+
+/**
+ * Unoptimised calls Processed 1000000 messages in 156.44 sec (6392.42 msg/sec)
+ */
 public class TcpLoadTest {
 
     public static void main(String[] args) throws Exception {
