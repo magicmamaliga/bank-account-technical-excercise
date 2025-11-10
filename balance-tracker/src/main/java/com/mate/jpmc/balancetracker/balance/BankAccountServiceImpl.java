@@ -28,7 +28,7 @@ import java.util.concurrent.LinkedBlockingDeque;
 
 @Service
 @Slf4j
-public class BankAccountServiceImpl implements  BankAccountService {
+public class BankAccountServiceImpl implements BankAccountService {
 
     @Resource
     AccountRepository accountRepository;
@@ -41,6 +41,9 @@ public class BankAccountServiceImpl implements  BankAccountService {
 
     @Resource
     TransactionCache transactionCache;
+    ExecutorService batchExecutor = Executors.newSingleThreadExecutor();
+    BlockingDeque<Transaction> transactions = new LinkedBlockingDeque<>();
+    private Long lastFlush;
 
     public BigDecimal retrieveBalance(String accountId) throws BalanceTrackerException {
         log.info("Retrieving balance for account {}", accountId);
@@ -84,7 +87,7 @@ public class BankAccountServiceImpl implements  BankAccountService {
             throw new BalanceTrackerException("Account Id can't be null or empty");
         }
 
-        accountBalanceCache.computeIfAbsent(transactionDTO.accountId(), (id)->{
+        accountBalanceCache.computeIfAbsent(transactionDTO.accountId(), (id) -> {
             Optional<Account> account = accountRepository.findByAccountId(id);
             if (account.isEmpty()) {
                 log.info("Account not found accountId {}", id);
@@ -117,10 +120,6 @@ public class BankAccountServiceImpl implements  BankAccountService {
             lastFlush = System.currentTimeMillis();
         });
     }
-
-    ExecutorService batchExecutor =  Executors.newSingleThreadExecutor();
-    BlockingDeque<Transaction> transactions = new LinkedBlockingDeque<>();
-    private Long lastFlush;
 
     @Scheduled(fixedRate = 6000)
     void handleLeftover() {

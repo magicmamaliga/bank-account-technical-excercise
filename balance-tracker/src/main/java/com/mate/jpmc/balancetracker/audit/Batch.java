@@ -9,8 +9,8 @@ import java.util.List;
 public class Batch {
 
     public static final BigDecimal CAP = new BigDecimal(1_000_000);
-    private BigDecimal remaining = CAP;
     private final List<TransactionDTO> items = new ArrayList<>();
+    private BigDecimal remaining = CAP;
 
     public List<TransactionDTO> getItems() {
         return items;
@@ -18,7 +18,7 @@ public class Batch {
 
     public void add(TransactionDTO transactionDTO) {
         BigDecimal value = transactionDTO.amount().abs();
-        if(value.compareTo(remaining) > 0) {
+        if (value.compareTo(remaining) > 0) {
             throw new IllegalArgumentException("Value does not fit");
         }
         remaining = remaining.subtract(value);

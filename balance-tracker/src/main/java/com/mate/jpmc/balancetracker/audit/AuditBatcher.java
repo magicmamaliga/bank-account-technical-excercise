@@ -27,6 +27,8 @@ public class AuditBatcher implements SchedulingConfigurer {
 
     @Resource
     private AuditSender auditSender;
+    @Value("${submission.size:1000}")   // set 1000 or 100000
+    private int submissionSize;
 
     public TaskScheduler taskScheduler() {
         ThreadPoolTaskScheduler scheduler = new ThreadPoolTaskScheduler();
@@ -53,10 +55,6 @@ public class AuditBatcher implements SchedulingConfigurer {
                     return base.plusMillis(delay);
                 });
     }
-
-
-    @Value("${submission.size:1000}")   // set 1000 or 100000
-    private int submissionSize;
 
     @Scheduled(fixedDelayString = "${audit.poll.delay.ms:1000}")
     public void submitForAudit() {

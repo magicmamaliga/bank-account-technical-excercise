@@ -19,7 +19,7 @@ import java.math.BigDecimal;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
-import static org.mockito.Mockito.*;
+import static org.mockito.Mockito.verifyNoMoreInteractions;
 
 @ExtendWith(MockitoExtension.class)
 class BankAccountServiceImplParameterizedTest {
@@ -47,7 +47,7 @@ class BankAccountServiceImplParameterizedTest {
     @ParameterizedTest
     @ValueSource(strings = {"200.01", "499999.99", "-250", "300000"})
     void processTransaction_validAmount_callsDeposit(String amountStr) throws BalanceTrackerException {
-        var tx = new TransactionDTO(null,"id", TransactionType.CREDIT, new BigDecimal(amountStr));
+        var tx = new TransactionDTO(null, "id", TransactionType.CREDIT, new BigDecimal(amountStr));
 
         bankAccountService.processTransaction(tx);
 

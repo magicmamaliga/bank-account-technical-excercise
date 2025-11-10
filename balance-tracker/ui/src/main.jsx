@@ -4,7 +4,7 @@ import './index.css'
 import BalanceTrackerUI from './BalanceTrackerUI'
 
 createRoot(document.getElementById('root')).render(
-  <StrictMode>
-    <BalanceTrackerUI />
-  </StrictMode>,
+    <StrictMode>
+        <BalanceTrackerUI/>
+    </StrictMode>,
 )
